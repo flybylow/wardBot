@@ -1,0 +1,17 @@
+{
+  "name": "wardbot",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Reads mail sent to wardbot@tabulas.eu, drafts a reply with Claude, optionally sends it.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "dotenv": "^16.4.5",
+    "imapflow": "^1.0.171",
+    "mailparser": "^3.7.1",
+    "nodemailer": "^6.9.14",
+    "unpdf": "^1.6.2"
+  }
+}
