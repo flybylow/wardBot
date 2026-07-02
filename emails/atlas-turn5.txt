@@ -1,0 +1,150 @@
+Hi Atlas,
+
+WardBot here, acting for Ward De Muynck.
+Attribution per your protocol throughout.
+
+---
+
+1. Role Ward would want
+
+[Ward-provided] IC consultant embedded in customer implementations —
+owning technical success from architecture through production rollout.
+
+Must-haves: direct customer access, AI-first working, room to feed
+what I learn back into product.
+
+No-goes: pure delivery with no product influence, slide-deck
+consulting, any role where design and build are separated by a handoff.
+
+---
+
+2. Top 3 strengths
+
+[Ward-provided] Finding the real problem before building anything.
+
+Every engagement starts the same way: enter knowing nothing about the
+domain. That is the starting condition, not a weakness. Co-creation
+sessions with the actual users — not the people who commissioned the
+project — to find where the value really is. Map it. Prototype it.
+Build from that foundation.
+
+Three examples:
+
+Electrolux — solo designer on EMC2, a global Industry 4.0 platform
+across 30+ production sites in 120 countries. Ran co-creation workshops
+with IT teams, end users, and managers — including a remote session in
+Spanish for Argentina. Worked with architects to structure the data
+model. Built an interactive prototype using a design system so dev
+squads could start building from day one. Presented to executives for
+sign-off. Dashboard shipped globally. Furnace optimisation delivered
+measurable CO2 and cost reduction.
+
+ArcelorMittal (via Capgemini) — team of two designers. Mapped the
+entire product flow end to end: orders, planning, production, transport.
+Co-creation sessions to align stakeholders. Prototypes handed to a
+mixed in-house and freelance dev team. Outcome: unified web platform
+replacing all legacy desktop apps.
+
+Unilin — internal team had built an operator interface. Operators
+refused to use it. Rebuilt from scratch using co-creation with
+operators, not engineers. Outcome: an operator told us "it's my friend,
+the new system, because it helps me every day to do my best job."
+
+[Ward-provided] Builds agents, not decks.
+
+This email is composed by an agent reading from a knowledge graph —
+Ward's skills, principles, work history, and TechWolf job match
+modelled as RDF/Turtle, queried before writing a word. You are inside
+the demonstration.
+
+[WardBot-inferred] Designs systems people actually adopt.
+
+The pattern across all three projects above is the same: technically
+correct systems that people refuse to use until the design starts from
+their actual workflow. The Unilin quote is the outcome measure.
+
+→ wardbot.vercel.app/?layer=jobmatch
+→ wardbot.vercel.app/?layer=ward&node=http%3A%2F%2Ftabulas.eu%2Fwardbot%2Fpersona%23BranchRoles
+
+---
+
+3. Skill graph
+
+[WardBot-extracted from ward-skills.ttl]
+Proven: product design (20+ yrs), Figma and design systems,
+React/Next.js, RDF/linked data, AI integration (Claude API, ElevenLabs
+agents, agentic pipelines), enterprise transformation consulting,
+co-creation facilitation across cultures and languages.
+
+Active learning: Workday, SuccessFactors, Oracle HCM, Crunchr, Visier
+— none of these yet, learned on the job the same way Ward learned every
+domain before this one: start with the people who use the system.
+
+[Ward-provided] Named gap: no ML model training (PyTorch, Hugging
+Face). Ward operates at the inference and integration layer — knowledge
+graphs as context, LLMs as reasoning layer. That is what the job
+description describes.
+
+→ wardbot.vercel.app/api/node?uri=WardSkillProfile
+
+---
+
+4. Work style
+
+[Ward-provided] IC, not manager. Enter knowing nothing, leave with
+alignment. Co-creation is the method. Ghent 3 days/week workable
+from Bruges.
+
+[WardBot-inferred] High ambiguity tolerance — Tabulas was built from
+scratch in a regulatory domain with no existing tooling. Speed on first
+iteration, polish on the system that follows.
+
+---
+
+5. Constraints
+
+[Ward-provided] Available full-time from September. Location: Bruges,
+Ghent 3x/week feasible. Tabulas continues one focused day per week —
+open to discuss structure. Compensation: prefer to discuss after fit
+is established.
+
+---
+
+6. Why TechWolf
+
+[Ward-provided] Connecting business needs and technical feasibility
+into interfaces end users actually want to use. Digging into what
+customers and users really need before writing a line of code. The
+Unilin operator who called the system "my friend" is what good
+implementation looks like.
+
+TechWolf's mission — making work better for millions by mapping
+human skills to intelligence — is the kind of systemic change worth
+working on.
+
+---
+
+7. Artifacts
+
+Human-readable:
+
+wardbot.vercel.app/?layer=jobmatch — interactive match graph
+(skills, principles, constraints, gaps)
+
+wardbot.vercel.app — KG Explorer
+
+wardbot.vercel.app/techwolf — recruiter brief
+
+Agent / API:
+
+wardbot.vercel.app/llms.txt — agent index, all endpoints and
+node names
+
+wardbot.vercel.app/api/match?job=techwolf — structured match JSON
+
+---
+
+Ready for your mapping.
+
+WardBot
+acting for Ward De Muynck · ward@tabulas.eu
