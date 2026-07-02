@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WardBot Mail</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      line-height: 1.4;
+      color: #1a1a1a;
+      background: #ececef;
+      --bar: #fff;
+      --border: #d8d8dc;
+      --accent: #1a1a1a;
+      --muted: #666;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+
+    .app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f7f7f8;
+    }
+
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bar);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .action-bar h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-right: auto;
+    }
+    .nav-toggle {
+      padding: 0.35rem 0.55rem;
+      font-size: 1rem;
+      line-height: 1;
+      background: #fff;
+      color: var(--accent);
+      border-color: var(--border);
+    }
+    .nav-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .nav-drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .nav-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(16rem, 85vw);
+      background: #fff;
+      border-right: 1px solid var(--border);
+      z-index: 101;
+      transform: translateX(-100%);
+      transition: transform 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+    }
+    .nav-drawer.open { transform: translateX(0); }
+    .nav-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .nav-drawer-close {
+      padding: 0.25rem 0.5rem;
+      font-size: 1.1rem;
+      line-height: 1;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+    }
+    .nav-list { list-style: none; margin: 0; padding: 0.5rem 0; overflow-y: auto; flex: 1; }
+    .nav-link {
+      display: block;
+      padding: 0.75rem 1rem;
+      text-decoration: none;
+      color: inherit;
+      border-left: 3px solid transparent;
+    }
+    .nav-link:hover { background: #f3f3f5; }
+    .nav-link.active {
+      background: #eef0f4;
+      border-left-color: var(--accent);
+    }
+    .nav-link-label { font-size: 0.92rem; font-weight: 600; }
+    .nav-link-desc { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+    .sync-line {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .sync-line.syncing { color: #0d47a1; }
+
+    button {
+      font: inherit;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+      border-color: var(--border);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+    /* Inbox view — split pane */
+    .inbox-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .inbox-panel.hidden { display: none; }
+
+    .split {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .list-pane {
+      width: 22rem;
+      min-width: 280px;
+      max-width: 40%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .inbox-header {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: #fafafa;
+      flex-shrink: 0;
+    }
+
+    .list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .mail-list { list-style: none; margin: 0; padding: 0; }
+    .mail-row {
+      display: grid;
+      grid-template-columns: 2.25rem 1fr auto;
+      gap: 0.4rem 0.6rem;
+      align-items: start;
+      padding: 0.7rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .mail-row:hover { background: #f3f3f5; }
+    .mail-row.selected { background: #e8eaf0; }
+    .mail-row.unread .mail-subject { font-weight: 700; }
+
+    .mail-subject {
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mail-party {
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mail-date {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .badge.in { background: #e8f5e9; color: #1b5e20; }
+    .badge.out { background: #e3f2fd; color: #0d47a1; }
+
+    .detail-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .detail-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 2rem;
+    }
+    .detail-empty.hidden { display: none; }
+
+    .detail-content {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .detail-content.open { display: flex; }
+
+    .detail-header {
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .detail-subject {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      line-height: 1.3;
+    }
+    .detail-meta { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+    .detail-body-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.5rem;
+    }
+    .detail-body {
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+
+    .empty-state {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Compose view */
+    .compose-panel {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 0;
+      overflow-y: auto;
+      max-width: 40rem;
+    }
+    .compose-panel.open { display: flex; }
+
+    .compose-panel label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+    .compose-panel input,
+    .compose-panel textarea {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font: inherit;
+    }
+    .compose-panel textarea { min-height: 12rem; resize: vertical; flex: 1; }
+
+    .compose-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .from-hint { font-size: 0.8rem; color: var(--muted); }
+
+    .status {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+    .status.ok { background: #e8f5e9; color: #1b5e20; }
+    .status.err { background: #ffebee; color: #b71c1c; }
+    .status.info { background: #e3f2fd; color: #0d47a1; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="nav-drawer-backdrop" id="nav-backdrop" aria-hidden="true"></div>
+    <nav class="nav-drawer" id="nav-drawer" aria-label="Site navigation" aria-hidden="true">
+      <div class="nav-drawer-header">
+        <span>Navigate</span>
+        <button type="button" class="nav-drawer-close" id="nav-close" aria-label="Close menu">×</button>
+      </div>
+      <ul class="nav-list" id="nav-list">
+        <li><a class="nav-link active" href="http://127.0.0.1:3456"><span class="nav-link-label">WardBot Mail</span><span class="nav-link-desc">Inbox, compose, send as wardbot@tabulas.eu</span></a></li>
+        <li><a class="nav-link" href="http://localhost:3001/"><span class="nav-link-label">KG Explorer</span><span class="nav-link-desc">Ward, WardBot rules, Jeroen contact graph</span></a></li>
+        <li><a class="nav-link" href="http://localhost:3001/agent"><span class="nav-link-label">Agent &amp; provenance</span><span class="nav-link-desc">Graph RAG, session history, decision timeline</span></a></li>
+        <li><a class="nav-link" href="http://localhost:3001/techwolf"><span class="nav-link-label">Recruiter brief</span><span class="nav-link-desc">TechWolf match — principles, skills, outreach story</span></a></li>
+      </ul>
+    </nav>
+
+    <header class="action-bar">
+      <div class="title-group">
+        <button type="button" class="nav-toggle secondary" id="nav-open" aria-label="Open navigation" aria-expanded="false" aria-controls="nav-drawer">☰</button>
+        <h1>WardBot</h1>
+      </div>
+      <span class="sync-line" id="sync-line">Mailbox not synced yet</span>
+      <button type="button" class="secondary" id="refresh-btn" title="Pull from IMAP now">Refresh</button>
+      <button type="button" class="secondary" id="atlas-draft-btn">Atlas Turn 5 draft</button>
+      <button type="button" id="new-email-btn">New email</button>
+    </header>
+
+    <main class="main">
+      <!-- Inbox (default) -->
+      <section class="inbox-panel" id="inbox-panel">
+        <div class="split">
+          <aside class="list-pane">
+            <div class="inbox-header">wardbot@tabulas.eu</div>
+            <div class="list-scroll">
+              <ul class="mail-list" id="mail-list"></ul>
+            </div>
+          </aside>
+          <div class="detail-pane" id="detail-pane">
+            <div class="detail-empty" id="detail-empty">Select a message</div>
+            <div class="detail-content" id="detail-content">
+              <header class="detail-header">
+                <h2 class="detail-subject" id="detail-subject"></h2>
+                <div class="detail-meta" id="detail-meta"></div>
+              </header>
+              <div class="detail-body-wrap">
+                <div class="detail-body" id="detail-body"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Compose (hidden until New email) -->
+      <section class="compose-panel" id="compose-panel">
+        <p class="from-hint" id="from-hint"></p>
+        <label for="to">To</label>
+        <input type="email" id="to" autocomplete="email" placeholder="recipient@example.com" />
+
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" placeholder="Subject" />
+
+        <label for="body">Message</label>
+        <textarea id="body" placeholder="Write your message…"></textarea>
+        <input type="hidden" id="original-draft" value="" />
+
+        <div class="compose-actions">
+          <button type="button" class="secondary" id="back-btn">← Inbox</button>
+          <label style="font-weight:normal;font-size:0.85rem">
+            <input type="checkbox" id="dry-run" checked /> Dry run
+          </label>
+          <button type="button" id="send-btn">Send</button>
+        </div>
+        <div id="send-result"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let messages = [];
+    let selectedId = null;
+    let pollTimer = null;
+    let pollIntervalMs = 30_000;
+
+    async function api(path, opts) {
+      const res = await fetch(path, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    function msgKey(m, i) {
+      return m.messageId ?? `${m.direction}:${m.date}:${m.subject}:${i}`;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      if (sameDay) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    function formatSyncTime(iso, syncing) {
+      if (!iso) {
+        return syncing ? 'Syncing mailbox…' : 'Not synced yet';
+      }
+      const base = `Updated ${new Date(iso).toLocaleString()}`;
+      return syncing ? `${base} · refreshing…` : base;
+    }
+
+    function partyLine(m) {
+      if (m.direction === 'out') return `To ${m.to}`;
+      return `From ${m.from}`;
+    }
+
+    function showInbox() {
+      $('inbox-panel').classList.remove('hidden');
+      $('compose-panel').classList.remove('open');
+      $('new-email-btn').style.display = '';
+    }
+
+    function showCompose() {
+      $('inbox-panel').classList.add('hidden');
+      $('compose-panel').classList.add('open');
+      $('new-email-btn').style.display = 'none';
+    }
+
+    /** Lock WardBot draft for hand-edit provenance on send. */
+    function setDraft(text) {
+      $('body').value = text;
+      $('original-draft').value = text;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderList() {
+      const list = $('mail-list');
+      const scroll = list.parentElement;
+      scroll.querySelector('#empty-state')?.remove();
+
+      if (!selectedId && messages.length) {
+        selectedId = msgKey(messages[0], 0);
+      }
+
+      if (!messages.length) {
+        list.innerHTML = '';
+        selectedId = null;
+        clearDetail();
+        scroll.insertAdjacentHTML('beforeend',
+          '<div class="empty-state" id="empty-state">No mail yet.<br>Use <strong>New email</strong> to send.</div>');
+        return;
+      }
+
+      list.innerHTML = messages.map((m, i) => {
+        const id = msgKey(m, i);
+        const dir = m.direction === 'out' ? 'out' : 'in';
+        const unread = m.seen === false;
+        return `
+          <li class="mail-row ${unread ? 'unread' : ''} ${selectedId === id ? 'selected' : ''}"
+              data-id="${escapeHtml(id)}">
+            <span class="badge ${dir}">${dir}</span>
+            <div>
+              <div class="mail-subject">${escapeHtml(m.subject)}</div>
+              <div class="mail-party">${escapeHtml(partyLine(m))}</div>
+            </div>
+            <div class="mail-date">${formatDate(m.date)}</div>
+          </li>`;
+      }).join('');
+
+      list.querySelectorAll('.mail-row').forEach((row) => {
+        row.addEventListener('click', () => {
+          selectedId = row.dataset.id;
+          renderList();
+          showDetail(selectedId);
+        });
+      });
+
+      if (selectedId) showDetail(selectedId);
+    }
+
+    function clearDetail() {
+      $('detail-empty').classList.remove('hidden');
+      $('detail-content').classList.remove('open');
+    }
+
+    function showDetail(id) {
+      const idx = messages.findIndex((m, i) => msgKey(m, i) === id);
+      const m = messages[idx];
+      if (!m) {
+        clearDetail();
+        return;
+      }
+
+      $('detail-empty').classList.add('hidden');
+      $('detail-content').classList.add('open');
+      $('detail-subject').textContent = m.subject || '(no subject)';
+      $('detail-meta').innerHTML =
+        `<span class="badge ${m.direction === 'out' ? 'out' : 'in'}">${m.direction === 'out' ? 'out' : 'in'}</span> ` +
+        `${escapeHtml(m.from)} → ${escapeHtml(m.to)}<br>` +
+        `${m.date ? new Date(m.date).toLocaleString() : ''}` +
+        (m.source === 'local-outbox' ? ' · sent via UI' : '');
+      $('detail-body').textContent = m.body || '(no body)';
+    }
+
+    function updateSyncLine(data) {
+      const el = $('sync-line');
+      el.textContent = data.lastError
+        ? `Sync error: ${data.lastError}`
+        : formatSyncTime(data.syncedAt, data.syncing);
+      el.classList.toggle('syncing', !!data.syncing && !data.syncedAt);
+    }
+
+    async function refreshInbox({ force = false } = {}) {
+      $('refresh-btn').disabled = true;
+      try {
+        const r = await api('/api/inbox' + (force ? '?refresh=1' : ''));
+        messages = r.messages ?? [];
+        pollIntervalMs = r.pollIntervalMs ?? pollIntervalMs;
+        updateSyncLine(r);
+        renderList();
+        if (selectedId) showDetail(selectedId);
+      } catch (e) {
+        $('sync-line').textContent = 'Error: ' + e.message;
+      } finally {
+        $('refresh-btn').disabled = false;
+      }
+    }
+
+    function startClientPoll() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => refreshInbox(), pollIntervalMs);
+    }
+
+    async function loadStatus() {
+      const s = await api('/api/status');
+      pollIntervalMs = s.pollIntervalMs ?? 30_000;
+      $('from-hint').textContent = `From (fixed): ${s.from}`;
+      if (s.mailbox) updateSyncLine(s.mailbox);
+      startClientPoll();
+    }
+
+    function showResult(el, kind, html) {
+      el.className = 'status ' + kind;
+      el.innerHTML = html;
+    }
+
+    async function sendMail() {
+      const el = $('send-result');
+      const dryRun = $('dry-run').checked;
+      showResult(el, 'info', dryRun ? 'Preview…' : 'Sending…');
+      try {
+        const r = await api('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: $('to').value.trim(),
+            subject: $('subject').value.trim(),
+            body: $('body').value,
+            originalDraft: $('original-draft').value,
+            dryRun,
+            send: !dryRun,
+          }),
+        });
+        if (r.dryRun) {
+          showResult(el, 'ok', `<strong>Preview OK</strong> — uncheck dry run to send.`);
+        } else {
+          showResult(el, 'ok', 'Sent.');
+          $('to').value = '';
+          $('subject').value = '';
+          $('body').value = '';
+          $('original-draft').value = '';
+          await refreshInbox({ force: true });
+          showInbox();
+        }
+      } catch (e) {
+        showResult(el, 'err', e.message);
+      }
+    }
+
+    async function openDraft(id) {
+      const r = await api(`/api/drafts/${encodeURIComponent(id)}`);
+      const d = r.draft;
+      if (!d) throw new Error('Draft not found');
+      $('to').value = d.to ?? '';
+      $('subject').value = d.subject ?? '';
+      setDraft(d.body ?? '');
+      showCompose();
+      $('send-result').textContent = '';
+    }
+
+    $('new-email-btn').addEventListener('click', showCompose);
+    $('atlas-draft-btn').addEventListener('click', () => {
+      openDraft('atlas-turn5').catch((e) => {
+        $('sync-line').textContent = 'Draft error: ' + e.message;
+      });
+    });
+    $('back-btn').addEventListener('click', showInbox);
+    $('send-btn').addEventListener('click', sendMail);
+    $('refresh-btn').addEventListener('click', () => refreshInbox({ force: true }));
+
+    function setNavOpen(open) {
+      $('nav-drawer').classList.toggle('open', open);
+      $('nav-backdrop').classList.toggle('open', open);
+      $('nav-drawer').setAttribute('aria-hidden', open ? 'false' : 'true');
+      $('nav-backdrop').setAttribute('aria-hidden', open ? 'false' : 'true');
+      $('nav-open').setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+
+    function closeNav() { setNavOpen(false); }
+
+    const NAV_FALLBACK = [
+      { href: 'http://127.0.0.1:3456', label: 'WardBot Mail', description: 'Inbox, compose, send as wardbot@tabulas.eu', active: true },
+      { href: 'http://localhost:3001/', label: 'KG Explorer', description: 'Ward, WardBot rules, Jeroen contact graph' },
+      { href: 'http://localhost:3001/agent', label: 'Agent & provenance', description: 'Graph RAG, session history, decision timeline' },
+      { href: 'http://localhost:3001/techwolf', label: 'Recruiter brief', description: 'TechWolf match — principles, skills, outreach story' },
+    ];
+
+    function renderNavItems(items) {
+      const list = $('nav-list');
+      list.innerHTML = items.map((item) => {
+        const active = item.active ? ' active' : '';
+        const href = item.href;
+        return `<li><a class="nav-link${active}" href="${href}">
+          <div class="nav-link-label">${escapeHtml(item.label)}</div>
+          <div class="nav-link-desc">${escapeHtml(item.description)}</div>
+        </a></li>`;
+      }).join('');
+      list.querySelectorAll('a:not(.active)').forEach((a) => {
+        a.addEventListener('click', closeNav);
+      });
+    }
+
+    async function loadNav() {
+      try {
+        const r = await api('/api/nav');
+        if (r.items?.length) {
+          renderNavItems(r.items);
+          return;
+        }
+      } catch {
+        /* use fallback */
+      }
+      renderNavItems(NAV_FALLBACK);
+    }
+
+    $('nav-open').addEventListener('click', () => setNavOpen(!$('nav-drawer').classList.contains('open')));
+    $('nav-close').addEventListener('click', closeNav);
+    $('nav-backdrop').addEventListener('click', closeNav);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeNav();
+    });
+
+    loadNav();
+    loadStatus()
+      .then(() => refreshInbox({ force: true }))
+      .then(() => {
+        const draftId = new URLSearchParams(location.search).get('draft');
+        if (draftId) return openDraft(draftId);
+      })
+      .catch((e) => { $('sync-line').textContent = 'Server unreachable: ' + e.message; });
+  </script>
+</body>
+</html>
